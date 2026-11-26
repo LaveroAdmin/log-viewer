@@ -49,6 +49,32 @@ class LogController extends Controller
         return compact('pos', 'logs');
     }
 
+    public function download($file)
+    {
+        $viewer = new LogViewer($file);
+        $path = $viewer->getFilePath();
+
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->download($path, basename($path));
+    }
+
+    public function clear($file)
+    {
+        $viewer = new LogViewer($file);
+        $path = $viewer->getFilePath();
+
+        if (file_exists($path) && is_writable($path)) {
+            file_put_contents($path, '');
+        }
+
+        admin_toastr('Log file cleared.', 'success');
+
+        return redirect()->route('log-viewer-file', ['file' => $file]);
+    }
+
     protected static function bytesToHuman($bytes)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];

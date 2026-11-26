@@ -1,10 +1,26 @@
 <div class="row">
     <div class="col-md-10">
         <div class="card card-primary">
-            <div class="card-header with-border">
+            <div class="card-header with-border d-flex flex-wrap align-items-center gap-2">
                 <button type="button" class="btn btn-primary btn-sm log-refresh"><i class="icon-refresh"></i> {{ trans('admin.refresh') }}</button>
                 <button type="button" class="btn btn-light btn-sm log-live"><i id="live-indicator" class="icon-play"></i> </button>
-                <div class="float-end">
+                <select id="log-level-filter" class="form-select form-select-sm" style="width: auto;">
+                    <option value="">ALL LEVELS</option>
+                    @foreach(array_keys(\LaveroAdmin\Admin\LogViewer\LogViewer::$levelColors) as $lvl)
+                        <option value="{{ $lvl }}">{{ $lvl }}</option>
+                    @endforeach
+                </select>
+                <input type="text" id="log-search-input" class="form-control form-control-sm" style="width: 190px;" placeholder="Filter logs...">
+                @if($fileName)
+                    <a href="{{ route('log-viewer-download', ['file' => str_replace($bypass_protected_urls_find, $bypass_protected_urls_replace, $fileName)]) }}" class="btn btn-outline-secondary btn-sm no-ajax" title="Download">
+                        <i class="icon-download"></i>
+                    </a>
+                    <form action="{{ route('log-viewer-clear', ['file' => str_replace($bypass_protected_urls_find, $bypass_protected_urls_replace, $fileName)]) }}" method="POST" class="d-inline" onsubmit="return confirm('Clear this log file?');">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Clear log"><i class="icon-trash"></i></button>
+                    </form>
+                @endif
+                <div class="ms-auto">
                     <div class="btn-group">
                         @if ($prevUrl)
                         <a href="{{ $prevUrl }}" class="btn btn-light btn-sm"><i class="icon-chevron-left"></i></a>
@@ -161,6 +177,30 @@
                 admin.ajax.reload();
             }, 5000);
         }
+        var levelSelect = document.getElementById('log-level-filter');
+        var searchInput = document.getElementById('log-search-input');
+        function applyLogFilters() {
+            var lvl = (levelSelect ? levelSelect.value : '').toUpperCase();
+            var q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            var rows = document.querySelectorAll('.table tbody tr');
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                if (row.querySelector('.collapse')) continue;
+                var badge = row.querySelector('.badge');
+                var rowLvl = badge ? badge.textContent.trim().toUpperCase() : '';
+                var text = row.textContent.toLowerCase();
+                var matchLvl = !lvl || rowLvl === lvl;
+                var matchQ = !q || text.indexOf(q) !== -1;
+                var show = matchLvl && matchQ;
+                row.style.display = show ? '' : 'none';
+                var next = rows[i + 1];
+                if (next && next.querySelector('.collapse')) {
+                    next.style.display = show ? '' : 'none';
+                }
+            }
+        }
+        if (levelSelect) levelSelect.addEventListener('change', applyLogFilters);
+        if (searchInput) searchInput.addEventListener('input', applyLogFilters);
     })();
 
 </script>

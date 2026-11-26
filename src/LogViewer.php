@@ -384,8 +384,8 @@ TPL;
                 'time'  => $log[0] ?? '',
                 'env'   => $log[1] ?? '',
                 'level' => $log[2] ?? '',
-                'info'  => $log[3] ?? '',
-                'trace' => trim($log[4] ?? ''),
+                'info'  => $this->redactSensitive($log[3] ?? ''),
+                'trace' => $this->redactSensitive(trim($log[4] ?? '')),
             ];
         }
 
@@ -394,5 +394,22 @@ TPL;
         rsort($parsed);
 
         return $parsed;
+    }
+
+    /**
+     * Mask sensitive credentials, tokens, and secrets in log lines.
+     */
+    protected function redactSensitive(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        $patterns = [
+            '/(Bearer\s+)[A-Za-z0-9\-\._~\+\/]+=*/i' => '$1[REDACTED]',
+            '/([\"\']?(?:password|passwd|secret|token|api_key|apikey|access_token|refresh_token|authorization|cookie)[\"\']?\s*[:=]\s*[\"\']?)([^\"\'\s,\}\]]+)/i' => '$1[REDACTED]',
+        ];
+
+        return (string) preg_replace(array_keys($patterns), array_values($patterns), $text);
     }
 }

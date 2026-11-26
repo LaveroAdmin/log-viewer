@@ -28,6 +28,8 @@ trait BootExtension
             $router->get('logs', 'LaveroAdmin\Admin\LogViewer\LogController@index')->name('log-viewer-index');
             $router->get('logs/{file}', 'LaveroAdmin\Admin\LogViewer\LogController@index')->name('log-viewer-file');
             $router->get('logs/{file}/tail', 'LaveroAdmin\Admin\LogViewer\LogController@tail')->name('log-viewer-tail');
+            $router->get('logs/{file}/download', 'LaveroAdmin\Admin\LogViewer\LogController@download')->name('log-viewer-download');
+            $router->post('logs/{file}/clear', 'LaveroAdmin\Admin\LogViewer\LogController@clear')->name('log-viewer-clear');
         });
     }
 
